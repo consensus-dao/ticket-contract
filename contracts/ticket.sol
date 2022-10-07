@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TokenTransfer is Ownable {
+contract Ticket is Ownable {
     using SafeERC20 for IERC20;
     IERC20 public ohm;
     IERC20 public usdt;
@@ -45,7 +45,7 @@ contract TokenTransfer is Ownable {
         return ohmTicketPrices[ticketName];
     }
     
-    function setTicketPrice(string memory ticketName, bool isStableCoin, uint ticketPrice) private onlyOwner {
+    function setTicketPrice(string memory ticketName, bool isStableCoin, uint ticketPrice) public onlyOwner {
         if (isStableCoin == true){
             usdTicketPrices[ticketName] = ticketPrice;
         }
@@ -53,7 +53,7 @@ contract TokenTransfer is Ownable {
     }
 
     function buyTicket(address _tokenAddr, string memory ticketName, bool isStableCoin) public checkAllowance(_tokenAddr, ticketName, isStableCoin) {
-        IERC20 token = _getTokenByAddress(_tokenAddr);
+        IERC20 token = IERC20(_tokenAddr);
         uint256 tokenPrice = getTicketPrice(ticketName, isStableCoin);
         token.safeTransferFrom(msg.sender, address(this), tokenPrice);
     }
@@ -69,20 +69,5 @@ contract TokenTransfer is Ownable {
         usdt.safeTransfer(gnosisMultiSig, usdtBalance);
         usdc.safeTransfer(gnosisMultiSig, usdcBalance);
         frax.safeTransfer(gnosisMultiSig, fraxBalance);
-    }
-
-    function _getTokenByAddress(address _tokenAddr) private view returns(IERC20 _token) {
-        // should have default token?
-        if( _tokenAddr == 0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5) {
-            _token = ohm;
-        } else if(_tokenAddr == 0xdAC17F958D2ee523a2206206994597C13D831ec7){
-            _token = usdt ;
-        } else if(_tokenAddr == 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48){
-            _token = usdc ;
-        } else if(_tokenAddr == 0x853d955aCEf822Db058eb8505911ED77F175b99e){
-            _token = frax ;
-        } else {
-            // throw exception
-        }
     }
 }
