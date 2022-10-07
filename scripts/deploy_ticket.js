@@ -1,9 +1,11 @@
 async function main() {
     const Ticket = await ethers.getContractFactory("Ticket")
-  
-    // Start deployment, returning a promise that resolves to a contract object
     const ticket = await Ticket.deploy()
-    console.log("Contract deployed to address:", ticket.address)
+    console.log("Ticket Contract deployed to address:", ticket.address)
+  
+    const InPersonTicketNFT = await ethers.getContractFactory("InPersonTicketNFT")
+    const contract = await InPersonTicketNFT.deploy()
+    console.log("InPersonTicketNFT Contract deployed to address:", contract.address)
   }
   
   main()
