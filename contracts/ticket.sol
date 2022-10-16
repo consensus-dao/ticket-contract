@@ -8,44 +8,29 @@ import "./InPersonTicketNFT.sol";
 contract Ticket is Ownable {
     using SafeERC20 for IERC20;
     IERC20 public ohm;
-    address public ohmAddr;
     IERC20 public usdt;
-    address public usdtAddr;
     IERC20 public usdc;
-    address public usdcAddr;
     IERC20 public frax;
-    address public fraxAddr;
+    IERC20 public dai;
     mapping (string => uint) public usdTicketPrices;
     mapping (string => uint) public ohmTicketPrices;
     string[] public ticketTypes;
-    address public gnosisMultiSig = 0x7EE54ab0f204bb3A83DF90fDd824D8b4abE93222;
-    address public InPersonTicketNFTAddr;
-
-    // token = MyToken's contract address
-    constructor() {
-        ohm = IERC20(0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5);
-        ohmAddr = 0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5;
-        usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
-        usdtAddr = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-        usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-        usdcAddr = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-        frax = IERC20(0x853d955aCEf822Db058eb8505911ED77F175b99e);
-        fraxAddr = 0x853d955aCEf822Db058eb8505911ED77F175b99e;
+    address public gnosisMultiSigAddr;
+    address public inPersonTicketNFTAddr;
+    constructor(address multisig, address nftAddr, address ohmAddr, address usdtAddr, address usdcAddr, address fraxAddr, address daiAddr) {
+        ohm = IERC20(ohmAddr);
+        usdt = IERC20(usdtAddr);
+        usdc = IERC20(usdcAddr);
+        frax = IERC20(fraxAddr);
+        dai = IERC20(daiAddr);
+        gnosisMultiSigAddr = multisig;
+        inPersonTicketNFTAddr = nftAddr;
     }
 
     // Modifier to check token allowance
-    modifier checkAllowance(address _tokenAddr, string memory ticketName, bool isStableCoin) {
-        uint256 tokenPrice = _getTicketPrice(_tokenAddr, ticketName, isStableCoin);
-        IERC20 _token;
-        if( _tokenAddr == ohmAddr) {
-            _token = ohm;
-        } else if(_tokenAddr == usdtAddr){
-            _token = usdt ;
-        } else if(_tokenAddr == usdcAddr){
-            _token = usdc ;
-        } else if(_tokenAddr == fraxAddr){
-            _token = frax ;
-        }
+    modifier checkAllowance(string memory tokenName, string memory ticketName, bool isStableCoin) {
+        uint256 tokenPrice = _getTicketPrice(tokenName, ticketName, isStableCoin);
+        IERC20 _token = _getTokenIERCbyName(tokenName);
         require(_token.allowance(msg.sender, address(this)) >= tokenPrice, "Error");
         _;
     }
@@ -58,11 +43,11 @@ contract Ticket is Ownable {
         ohmTicketPrices[ticketName] = ticketPrice;
     }
 
-    function buyTicket(address _tokenAddr, string memory ticketName, bool isStableCoin) public checkAllowance(_tokenAddr, ticketName, isStableCoin) {
-        IERC20 token = IERC20(_tokenAddr);
-        uint256 tokenPrice = _getTicketPrice(_tokenAddr, ticketName, isStableCoin);
+    function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public checkAllowance(tokenName, ticketName, isStableCoin) {
+        uint256 tokenPrice = _getTicketPrice(tokenName, ticketName, isStableCoin);
+        IERC20 token = _getTokenIERCbyName(tokenName);
         token.safeTransferFrom(msg.sender, address(this), tokenPrice);
-        InPersonTicketNFT(InPersonTicketNFTAddr).mintNFT(msg.sender);
+        InPersonTicketNFT(inPersonTicketNFTAddr).mintNFT(msg.sender);
     }
     
     function withdrawToken() external onlyOwner {
@@ -71,32 +56,50 @@ contract Ticket is Ownable {
         uint256 usdtBalance = usdt.balanceOf(address(this));
         uint256 usdcBalance = usdc.balanceOf(address(this));
         uint256 fraxBalance = frax.balanceOf(address(this));
-        ohm.safeTransfer(gnosisMultiSig, ohmBalance);
-        usdt.safeTransfer(gnosisMultiSig, usdtBalance);
-        usdc.safeTransfer(gnosisMultiSig, usdcBalance);
-        frax.safeTransfer(gnosisMultiSig, fraxBalance);
+        uint256 daiBalance = dai.balanceOf(address(this));
+        ohm.safeTransfer(gnosisMultiSigAddr, ohmBalance);
+        usdt.safeTransfer(gnosisMultiSigAddr, usdtBalance);
+        usdc.safeTransfer(gnosisMultiSigAddr, usdcBalance);
+        frax.safeTransfer(gnosisMultiSigAddr, fraxBalance);
+        dai.safeTransfer(gnosisMultiSigAddr, daiBalance);
     }
-    function _getTicketPrice(address _tokenAddr, string memory ticketName, bool isStableCoin) public view returns (uint) {
-        if (isStableCoin == true){
-            return usdTicketPrices[ticketName] * _getTokenDecimals(_tokenAddr);
+
+    function _getTokenIERCbyName(string memory tokenName) private view returns (IERC20){
+        if(keccak256(abi.encodePacked("ohm")) == keccak256(abi.encodePacked(tokenName))) {
+            return ohm;
+        } else if(keccak256(abi.encodePacked("usdt")) == keccak256(abi.encodePacked(tokenName))){
+            return usdt ;
+        } else if(keccak256(abi.encodePacked("usdc")) == keccak256(abi.encodePacked(tokenName))){
+            return usdc ;
+        } else if(keccak256(abi.encodePacked("frax")) == keccak256(abi.encodePacked(tokenName))){
+            return frax ;
         }
-        return ohmTicketPrices[ticketName] * _getTokenDecimals(_tokenAddr);
+        } else if(keccak256(abi.encodePacked("dai")) == keccak256(abi.encodePacked(tokenName))){
+            return dai ;
+        }
+        revert("Invalid tokenName, it should be one of ohm, usdt, usdc, frax, dai");
     }
 
-    function setInPersonTicketNFTAddr(address nftAddr) external onlyOwner {
-        InPersonTicketNFTAddr = nftAddr;
+    function _getTicketPrice(string memory tokenName, string memory ticketName, bool isStableCoin) private view returns (uint) {
+        if (isStableCoin == true){
+            return usdTicketPrices[ticketName] * _getTokenDecimals(tokenName);
+        }
+        return ohmTicketPrices[ticketName] * _getTokenDecimals(tokenName);
     }
 
-    function _getTokenDecimals(address _tokenAddr) public view returns (uint) {
-        if (_tokenAddr == ohmAddr) {
+    function _getTokenDecimals(string memory tokenName) private pure returns (uint) {
+        if(keccak256(abi.encodePacked("ohm")) == keccak256(abi.encodePacked(tokenName))) {
             return 9;
-        } else if (_tokenAddr == usdtAddr) {
-            return 6;
-        } else if (_tokenAddr == usdcAddr) {
-            return 6;
-        } else if (_tokenAddr == fraxAddr) {
-            return 18;
-        } 
+        } else if(keccak256(abi.encodePacked("usdt")) == keccak256(abi.encodePacked(tokenName))){
+            return 6 ;
+        } else if(keccak256(abi.encodePacked("usdc")) == keccak256(abi.encodePacked(tokenName))){
+            return 6 ;
+        } else if(keccak256(abi.encodePacked("frax")) == keccak256(abi.encodePacked(tokenName))){
+            return 18 ;
+        }
+        } else if(keccak256(abi.encodePacked("dai")) == keccak256(abi.encodePacked(tokenName))){
+            return 18 ;
+        }
         revert("token Address not found!");
     }
 }
