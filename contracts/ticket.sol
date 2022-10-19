@@ -50,8 +50,7 @@ contract Ticket is Ownable {
         inPersonTicketNFTAddr = addr;
     }
 
-    // function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public checkAllowance(tokenName, ticketName, isStableCoin) {
-    function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public {
+    function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public checkAllowance(tokenName, ticketName, isStableCoin) {
         uint256 tokenPrice = _getTicketPrice(tokenName, ticketName, isStableCoin);
         IERC20 token = _getTokenIERCbyName(tokenName);
         SafeERC20.safeTransferFrom(token, msg.sender, address(this), tokenPrice);
