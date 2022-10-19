@@ -17,6 +17,8 @@ contract Ticket is Ownable {
     string[] public ticketTypes;
     address public gnosisMultiSigAddr;
     address public inPersonTicketNFTAddr;
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
     constructor(address multisig, address nftAddr, address ohmAddr, address usdtAddr, address usdcAddr, address fraxAddr, address daiAddr) {
         ohm = IERC20(ohmAddr);
         usdt = IERC20(usdtAddr);
@@ -31,6 +33,7 @@ contract Ticket is Ownable {
     modifier checkAllowance(string memory tokenName, string memory ticketName, bool isStableCoin) {
         uint256 tokenPrice = _getTicketPrice(tokenName, ticketName, isStableCoin);
         IERC20 _token = _getTokenIERCbyName(tokenName);
+        emit Approval(msg.sender, address(this), tokenPrice);
         require(_token.allowance(msg.sender, address(this)) >= tokenPrice, "Error");
         _;
     }
@@ -43,10 +46,15 @@ contract Ticket is Ownable {
         ohmTicketPrices[ticketName] = ticketPrice;
     }
 
-    function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public checkAllowance(tokenName, ticketName, isStableCoin) {
+    function setInPersonTicketNFTAddr(address addr) public onlyOwner {
+        inPersonTicketNFTAddr = addr;
+    }
+
+    // function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public checkAllowance(tokenName, ticketName, isStableCoin) {
+    function buyTicket(string memory tokenName, string memory ticketName, bool isStableCoin) public {
         uint256 tokenPrice = _getTicketPrice(tokenName, ticketName, isStableCoin);
         IERC20 token = _getTokenIERCbyName(tokenName);
-        token.safeTransferFrom(msg.sender, address(this), tokenPrice);
+        SafeERC20.safeTransferFrom(token, msg.sender, address(this), tokenPrice);
         InPersonTicketNFT(inPersonTicketNFTAddr).mintNFT(msg.sender);
     }
     
@@ -73,7 +81,6 @@ contract Ticket is Ownable {
             return usdc ;
         } else if(keccak256(abi.encodePacked("frax")) == keccak256(abi.encodePacked(tokenName))){
             return frax ;
-        }
         } else if(keccak256(abi.encodePacked("dai")) == keccak256(abi.encodePacked(tokenName))){
             return dai ;
         }
@@ -82,9 +89,9 @@ contract Ticket is Ownable {
 
     function _getTicketPrice(string memory tokenName, string memory ticketName, bool isStableCoin) private view returns (uint) {
         if (isStableCoin == true){
-            return usdTicketPrices[ticketName] * _getTokenDecimals(tokenName);
+            return usdTicketPrices[ticketName] * 10 ** _getTokenDecimals(tokenName);
         }
-        return ohmTicketPrices[ticketName] * _getTokenDecimals(tokenName);
+        return ohmTicketPrices[ticketName] * 10 ** _getTokenDecimals(tokenName);
     }
 
     function _getTokenDecimals(string memory tokenName) private pure returns (uint) {
@@ -96,7 +103,6 @@ contract Ticket is Ownable {
             return 6 ;
         } else if(keccak256(abi.encodePacked("frax")) == keccak256(abi.encodePacked(tokenName))){
             return 18 ;
-        }
         } else if(keccak256(abi.encodePacked("dai")) == keccak256(abi.encodePacked(tokenName))){
             return 18 ;
         }

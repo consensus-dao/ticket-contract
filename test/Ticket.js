@@ -12,11 +12,20 @@ describe("Ticket", function () {
   async function deployTicketFixture() {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
-
+    const DAI = await ethers.getContractFactory("MockDAI");
+    const dai = await DAI.deploy();
+    await dai.deployed();
+    
     const Ticket = await ethers.getContractFactory("Ticket");
-    const ticket = await Ticket.deploy("0x78000b0605E81ea9df54b33f72ebC61B5F5c8077", "0x78000b0605E81ea9df54b33f72ebC61B5F5c8077", "0x78000b0605E81ea9df54b33f72ebC61B5F5c8077", "0x78000b0605E81ea9df54b33f72ebC61B5F5c8077", "0x78000b0605E81ea9df54b33f72ebC61B5F5c8077", "0x78000b0605E81ea9df54b33f72ebC61B5F5c8077");
+    // owner.address here is just a place holder
+    const ticket = await Ticket.deploy("0x78000b0605E81ea9df54b33f72ebC61B5F5c8077", owner.address, dai.address, dai.address, dai.address, dai.address, dai.address);
 
-    return { ticket, owner, otherAccount };
+    const INPERSONTICKETNFT = await ethers.getContractFactory("InPersonTicketNFT");
+    const inPersonTicketNFT = await INPERSONTICKETNFT.deploy(ticket.address);
+    await inPersonTicketNFT.deployed();
+    
+    await ticket.setInPersonTicketNFTAddr(inPersonTicketNFT.address);
+    return { ticket, inPersonTicketNFT, dai, owner, otherAccount };
   }
 
   describe("Deployment", function () {
@@ -32,71 +41,22 @@ describe("Ticket", function () {
       const { ticket, owner } = await loadFixture(deployTicketFixture);
       expect(await ticket.owner()).to.equal(owner.address);
     });
+
+    it("Buy Ticket", async function () {
+      const { ticket, dai, owner, otherAccount } = await loadFixture(deployTicketFixture);
+      console.log(owner.address)
+      console.log(otherAccount.address)
+      await ticket.setTicketPrice("earlyBird", true, 33);
+      await ticket.setTicketPrice("earlyBird", false, 3);
+      const ownerBalance = await dai.balanceOf(otherAccount.address);
+      console.log(`ownerBalance: ${ownerBalance}`)
+      await dai.transfer(otherAccount.address, ethers.utils.parseUnits("33", 18));
+      console.log(`ownerBalance: ${await dai.balanceOf(otherAccount.address)}`);
+      await dai.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("33", 18))
+      console.log('Amount that ticket is allowed to spend: ', await dai.allowance(otherAccount.address, ticket.address))
+      await ticket.connect(otherAccount).buyTicket("dai", "earlyBird", true)
+      // expect(await ticket.owner()).to.equal(owner.address);
+    });
+
   });
-
-//   describe("Withdrawals", function () {
-//     describe("Validations", function () {
-//       it("Should revert with the right error if called too soon", async function () {
-//         const { lock } = await loadFixture(deployTicketFixture);
-
-//         await expect(lock.withdraw()).to.be.revertedWith(
-//           "You can't withdraw yet"
-//         );
-//       });
-
-//       it("Should revert with the right error if called from another account", async function () {
-//         const { lock, unlockTime, otherAccount } = await loadFixture(
-//           deployTicketFixture
-//         );
-
-//         // We can increase the time in Hardhat Network
-//         await time.increaseTo(unlockTime);
-
-//         // We use lock.connect() to send a transaction from another account
-//         await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-//           "You aren't the owner"
-//         );
-//       });
-
-//       it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-//         const { lock, unlockTime } = await loadFixture(
-//           deployTicketFixture
-//         );
-
-//         // Transactions are sent using the first signer by default
-//         await time.increaseTo(unlockTime);
-
-//         await expect(lock.withdraw()).not.to.be.reverted;
-//       });
-//     });
-
-//     describe("Events", function () {
-//       it("Should emit an event on withdrawals", async function () {
-//         const { lock, unlockTime, lockedAmount } = await loadFixture(
-//           deployTicketFixture
-//         );
-
-//         await time.increaseTo(unlockTime);
-
-//         await expect(lock.withdraw())
-//           .to.emit(lock, "Withdrawal")
-//           .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
-//       });
-//     });
-
-//     describe("Transfers", function () {
-//       it("Should transfer the funds to the owner", async function () {
-//         const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-//           deployTicketFixture
-//         );
-
-//         await time.increaseTo(unlockTime);
-
-//         await expect(lock.withdraw()).to.changeEtherBalances(
-//           [owner, lock],
-//           [lockedAmount, -lockedAmount]
-//         );
-//       });
-//     });
-//   });
 });
