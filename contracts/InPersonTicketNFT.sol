@@ -16,7 +16,7 @@ contract InPersonTicketNFT is ERC721URIStorage, Ownable {
     constructor(address addr) ERC721("InPersonTicketNFT", "NFT") {
         DaoTicketAddress = addr;
     }
-    event NftEvent(uint256 tokenId, string tokenURI);
+    event NftEvent(address recipient, uint256 tokenId, string tokenURI);
     function mintNFT(address recipient)
         public  returns (uint256)
     {
@@ -27,7 +27,7 @@ contract InPersonTicketNFT is ERC721URIStorage, Ownable {
         // TODO: put a tokenURI placeholder for now!
         string memory tokenURI = "ipfs://QmNVJPswnRwHReptaBSrW81R43khRqDAdUMoZEtdnhM4mn";
         _setTokenURI(newItemId, tokenURI);
-        emit NftEvent(newItemId, tokenURI);
+        emit NftEvent(recipient, newItemId, tokenURI);
         return newItemId;
     }
 }
