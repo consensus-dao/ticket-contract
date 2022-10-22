@@ -43,6 +43,16 @@ describe("Ticket", function () {
     return { ticket, inPersonTicketNFT, dai, owner, otherAccount };
   }
 
+  async function _buyTicket() {
+    const { ticket, dai, otherAccount, inPersonTicketNFT } = await loadFixture(deployTicketFixture);
+    await dai.transfer(otherAccount.address, ethers.utils.parseUnits("33", 18));
+
+    await dai.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("33", 18))
+    await ticket.connect(otherAccount).buyTicket("dai", "2022-in-person", true)
+    return { ticket, dai, otherAccount, inPersonTicketNFT };
+
+  }
+
   describe("Test Ticket Contract", function () {
     it("setTicketPrice: Should set the right unlockTime", async function () {
       const { ticket } = await loadFixture(deployTicketFixture);
@@ -56,11 +66,7 @@ describe("Ticket", function () {
     });
 
     it("buyTicket: Shoud charge user token and mint them NFT as ticket!", async function () {
-      const { owner, ticket, dai, otherAccount, inPersonTicketNFT } = await loadFixture(deployTicketFixture);
-      await dai.transfer(otherAccount.address, ethers.utils.parseUnits("33", 18));
-
-      await dai.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("33", 18))
-      await ticket.connect(otherAccount).buyTicket("dai", "2022-in-person", true)
+      const { ticket, dai, otherAccount, inPersonTicketNFT } = await loadFixture(_buyTicket);
       const ownerBalance = await dai.balanceOf(otherAccount.address);
       expect(ownerBalance.toNumber()).to.equal(0);
       expect((await inPersonTicketNFT.balanceOf(otherAccount.address)).toNumber()).to.equal(1);
@@ -68,8 +74,11 @@ describe("Ticket", function () {
       
       const balanceOfTicketContract = (await dai.balanceOf(ticket.address)).div(DECIMALS)
       expect(balanceOfTicketContract.toNumber()).to.equal(33);
-      
+    });
+
+    it("withdrawToken: Shoud withdraw token to user wallet!", async function () {
       // withdraw!
+      const { ticket, dai } = await loadFixture(_buyTicket);
       await ticket.withdrawToken()
       const balanceOfOwnerWallet = (await dai.balanceOf(MULTISIG)).div(DECIMALS)
       expect(balanceOfOwnerWallet.toNumber()).to.equal(33);
