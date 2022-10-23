@@ -17,6 +17,7 @@ contract Ticket is Ownable {
     address public gnosisMultiSigAddr;
     address public inPersonTicketNFTAddr;
     event Approval(address indexed owner, address indexed spender, uint256 value);
+    event WithdrawFundTo(address indexed gnosisMultiSigAddr, uint256 tokenIdx, uint256 tokenBalance);
 
     constructor(address multisig, address nftAddr, address ohmAddr, address usdcAddr, address fraxAddr, address daiAddr) {
         ohm = IERC20(ohmAddr);
@@ -57,14 +58,14 @@ contract Ticket is Ownable {
     
     function withdrawToken() external onlyOwner {
         // multi-sig: Gnosis wallet address
-        uint256 ohmBalance = ohm.balanceOf(address(this));
-        uint256 usdcBalance = usdc.balanceOf(address(this));
-        uint256 fraxBalance = frax.balanceOf(address(this));
-        uint256 daiBalance = dai.balanceOf(address(this));
-        ohm.safeTransfer(gnosisMultiSigAddr, ohmBalance);
-        usdc.safeTransfer(gnosisMultiSigAddr, usdcBalance);
-        frax.safeTransfer(gnosisMultiSigAddr, fraxBalance);
-        dai.safeTransfer(gnosisMultiSigAddr, daiBalance);
+        IERC20[4] memory tokenArray = [ohm, usdc, frax, dai];
+        for (uint idx=0; idx<tokenArray.length; idx++) {
+            uint256 tokenBalance = tokenArray[idx].balanceOf(address(this));
+            if (tokenBalance != 0){
+                tokenArray[idx].safeTransfer(gnosisMultiSigAddr, tokenBalance);
+                emit WithdrawFundTo(gnosisMultiSigAddr, idx, tokenBalance);
+            }
+        }
     }
 
     function _getTokenIERCbyName(string memory tokenName) private view returns (IERC20){
