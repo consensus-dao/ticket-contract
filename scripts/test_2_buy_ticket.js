@@ -6,8 +6,8 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const web3 = createAlchemyWeb3(API_URL);
 
-const contract = require('./artifacts/contracts/Ticket.sol/Ticket.json')
-const contractAddress = "0x0FBc7D5aAd6643e17967E70F6e019798A7bABa3A";
+const contract = require('../artifacts/contracts/Ticket.sol/Ticket.json')
+const contractAddress = "0x02BF9031c93DE680e83aB66Ae6F38efFcB79719b";
 const ticketContract = new web3.eth.Contract(contract.abi, contractAddress);
 
 async function buyTicket() {
@@ -18,8 +18,8 @@ async function buyTicket() {
       from: PUBLIC_KEY,
       to: contractAddress,
       nonce: nonce,
-      gas: 500000,
-      data: ticketContract.methods.buyTicket("frax", "inPersonTicket", true).encodeABI(),
+      gas: 5000000,
+      data: ticketContract.methods.buyTicket("dai", "2022-in-person", true).encodeABI(),
     }
   
     const signPromise = web3.eth.accounts.signTransaction(tx, PRIVATE_KEY)
