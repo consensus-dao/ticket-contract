@@ -7,7 +7,7 @@ import "./InPersonTicketNFT.sol";
 
 contract Ticket is Ownable {
     using SafeERC20 for IERC20;
-    IERC20 public ohm;
+    IERC20 public gohm;
     IERC20 public usdc;
     IERC20 public frax;
     IERC20 public dai;
@@ -19,8 +19,8 @@ contract Ticket is Ownable {
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event WithdrawFundTo(address indexed gnosisMultiSigAddr, uint256 tokenIdx, uint256 tokenBalance);
 
-    constructor(address multisig, address nftAddr, address ohmAddr, address usdcAddr, address fraxAddr, address daiAddr) {
-        ohm = IERC20(ohmAddr);
+    constructor(address multisig, address nftAddr, address gohmAddr, address usdcAddr, address fraxAddr, address daiAddr) {
+        gohm = IERC20(gohmAddr);
         usdc = IERC20(usdcAddr);
         frax = IERC20(fraxAddr);
         dai = IERC20(daiAddr);
@@ -58,7 +58,7 @@ contract Ticket is Ownable {
     
     function withdrawToken() external onlyOwner {
         // multi-sig: Gnosis wallet address
-        IERC20[4] memory tokenArray = [ohm, usdc, frax, dai];
+        IERC20[4] memory tokenArray = [gohm, usdc, frax, dai];
         for (uint idx=0; idx<tokenArray.length; idx++) {
             uint256 tokenBalance = tokenArray[idx].balanceOf(address(this));
             if (tokenBalance != 0){
@@ -69,8 +69,8 @@ contract Ticket is Ownable {
     }
 
     function _getTokenIERCbyName(string memory tokenName) private view returns (IERC20){
-        if(keccak256(abi.encodePacked("ohm")) == keccak256(abi.encodePacked(tokenName))) {
-            return ohm;
+        if(keccak256(abi.encodePacked("gohm")) == keccak256(abi.encodePacked(tokenName))) {
+            return gohm;
         } else if(keccak256(abi.encodePacked("usdc")) == keccak256(abi.encodePacked(tokenName))){
             return usdc ;
         } else if(keccak256(abi.encodePacked("frax")) == keccak256(abi.encodePacked(tokenName))){
@@ -78,7 +78,7 @@ contract Ticket is Ownable {
         } else if(keccak256(abi.encodePacked("dai")) == keccak256(abi.encodePacked(tokenName))){
             return dai ;
         }
-        revert("Invalid tokenName, it should be one of ohm, usdt, usdc, frax, dai");
+        revert("Invalid tokenName, it should be one of gohm, usdt, usdc, frax, dai");
     }
 
     function _getTicketPrice(string memory tokenName, string memory ticketName, bool isStableCoin) private view returns (uint) {
@@ -89,7 +89,7 @@ contract Ticket is Ownable {
     }
 
     function _getTokenDecimals(string memory tokenName) private pure returns (uint) {
-        if(keccak256(abi.encodePacked("ohm")) == keccak256(abi.encodePacked(tokenName))) {
+        if(keccak256(abi.encodePacked("gohm")) == keccak256(abi.encodePacked(tokenName))) {
             return 9;
         } else if(keccak256(abi.encodePacked("usdc")) == keccak256(abi.encodePacked(tokenName))){
             return 6 ;

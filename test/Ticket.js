@@ -14,9 +14,9 @@ describe("Ticket", function () {
   async function deployTicketFixture() {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await ethers.getSigners();
-    const OHM = await ethers.getContractFactory("MockOHM");
-    const ohm = await OHM.deploy();
-    await ohm.deployed();
+    const GOHM = await ethers.getContractFactory("MockGOHM");
+    const gohm = await GOHM.deploy();
+    await gohm.deployed();
     const USDC = await ethers.getContractFactory("MockUSDC");
     const usdc = await USDC.deploy();
     await usdc.deployed();
@@ -28,7 +28,7 @@ describe("Ticket", function () {
     await dai.deployed();
     
     const Ticket = await ethers.getContractFactory("Ticket");
-    const ticket = await Ticket.deploy(MULTISIG, "0x0000000000000000000000000000000000000000", ohm.address, usdc.address, frax.address, dai.address);
+    const ticket = await Ticket.deploy(MULTISIG, "0x0000000000000000000000000000000000000000", gohm.address, usdc.address, frax.address, dai.address);
 
     const INPERSONTICKETNFT = await ethers.getContractFactory("InPersonTicketNFT");
     const inPersonTicketNFT = await INPERSONTICKETNFT.deploy(ticket.address);
