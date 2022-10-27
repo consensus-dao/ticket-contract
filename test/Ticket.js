@@ -57,7 +57,7 @@ describe("Ticket", function () {
     it("setTicketPrice: Should set the right unlockTime", async function () {
       const { ticket } = await loadFixture(deployTicketFixture);
       expect((await ticket.usdTicketPrices("2022-in-person")).toNumber()).to.equal(33);
-      expect((await ticket.ohmTicketPrices("2022-in-person")).toNumber()).to.equal(3);
+      expect((await ticket.gohmTicketPrices("2022-in-person")).toNumber()).to.equal(3);
     });
 
     it("Should set the right owner", async function () {

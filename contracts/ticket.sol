@@ -12,7 +12,7 @@ contract Ticket is Ownable {
     IERC20 public frax;
     IERC20 public dai;
     mapping (string => uint) public usdTicketPrices;
-    mapping (string => uint) public ohmTicketPrices;
+    mapping (string => uint) public gohmTicketPrices;
     string[] public ticketTypes;
     address public gnosisMultiSigAddr;
     address public inPersonTicketNFTAddr;
@@ -42,7 +42,7 @@ contract Ticket is Ownable {
         if (isStableCoin == true){
             usdTicketPrices[ticketName] = ticketPrice;
         }
-        ohmTicketPrices[ticketName] = ticketPrice;
+        gohmTicketPrices[ticketName] = ticketPrice;
     }
 
     function setInPersonTicketNFTAddr(address addr) public onlyOwner {
@@ -85,7 +85,7 @@ contract Ticket is Ownable {
         if (isStableCoin == true){
             return usdTicketPrices[ticketName] * 10 ** _getTokenDecimals(tokenName);
         }
-        return ohmTicketPrices[ticketName] * 10 ** _getTokenDecimals(tokenName);
+        return gohmTicketPrices[ticketName] * 10 ** _getTokenDecimals(tokenName);
     }
 
     function _getTokenDecimals(string memory tokenName) private pure returns (uint) {
