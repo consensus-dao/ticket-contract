@@ -53,7 +53,7 @@ contract Ticket is Ownable {
         uint256 tokenPrice = _getTicketPrice(tokenName, ticketName, isStableCoin);
         IERC20 token = _getTokenIERCbyName(tokenName);
         SafeERC20.safeTransferFrom(token, msg.sender, address(this), tokenPrice);
-        InPersonTicketNFT(inPersonTicketNFTAddr).mintNFT(msg.sender);
+        // InPersonTicketNFT(inPersonTicketNFTAddr).mintNFT(msg.sender);
     }
     
     function withdrawToken() external onlyOwner {

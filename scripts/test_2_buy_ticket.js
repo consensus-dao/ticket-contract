@@ -7,7 +7,7 @@ const { createAlchemyWeb3 } = require("@alch/alchemy-web3");
 const web3 = createAlchemyWeb3(API_URL);
 
 const contract = require('../artifacts/contracts/Ticket.sol/Ticket.json')
-const contractAddress = "0x02BF9031c93DE680e83aB66Ae6F38efFcB79719b";
+const contractAddress = "0xC66B6A382d325Da802a5C2Be2D6EC04E10e0873a";
 const ticketContract = new web3.eth.Contract(contract.abi, contractAddress);
 
 async function buyTicket() {
