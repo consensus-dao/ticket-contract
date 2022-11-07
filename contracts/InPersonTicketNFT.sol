@@ -1,4 +1,3 @@
-//Contract based on [https://docs.openzeppelin.com/contracts/3.x/erc721](https://docs.openzeppelin.com/contracts/3.x/erc721)
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -10,7 +9,7 @@ import "hardhat/console.sol";
 
 contract InPersonTicketNFT is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    Counters.Counter public _tokenIds;
     // TODO: DaoTicketAddress is just a place holder for now!
     address DaoTicketAddress;
     constructor(address addr) ERC721("InPersonTicketNFT", "NFT") {
