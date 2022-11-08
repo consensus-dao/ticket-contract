@@ -1,8 +1,6 @@
 const {
-  time,
   loadFixture,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const DECIMALS = ethers.BigNumber.from(10).pow(18)
@@ -33,6 +31,8 @@ describe("Ticket", function () {
     const INPERSONTICKETNFT = await ethers.getContractFactory("InPersonTicketNFT");
     const inPersonTicketNFT = await INPERSONTICKETNFT.deploy(ticket.address);
     await inPersonTicketNFT.deployed();
+    await inPersonTicketNFT.setTicketInventories(1);
+    expect((await inPersonTicketNFT.ticketInventories()).toNumber()).to.equal(1);
     
     await ticket.setInPersonTicketNFTAddr(inPersonTicketNFT.address);
 
@@ -90,6 +90,21 @@ describe("Ticket", function () {
       const { ticket, owner } = await loadFixture(deployTicketFixture);
       expect(await ticket.owner()).to.equal(owner.address);
     });
-
+    
+  });
+  describe("Test inPersonTicketNFT Contract", function () {
+    it("Should raise revert transaction when it exceeds ticket inventories!", async function () {
+      const { ticket, owner, dai, otherAccount, inPersonTicketNFT } = await loadFixture(deployTicketFixture);
+      await dai.transfer(otherAccount.address, ethers.utils.parseUnits("33", 18));
+      await dai.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("33", 18))
+      await ticket.connect(otherAccount).buyTicket("dai", "2022-in-person", true)
+      expect((await inPersonTicketNFT.tokenIds()).toNumber()).to.equal(1);
+      try {
+        await ticket.connect(otherAccount).buyTicket("dai", "2022-in-person", true)
+      } catch (error) {
+        // Exceed ticket inventories!
+        expect(error.message).to.equal("VM Exception while processing transaction: reverted with reason string 'Error'")
+      }
+    });    
   });
 });
