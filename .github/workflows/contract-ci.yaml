@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install
+      - run: npm ci
       - name: Test Coverage
         run: npx hardhat coverage --testfiles test/Ticket.js
       - name: Linters
