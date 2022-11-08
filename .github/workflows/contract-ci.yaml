@@ -23,6 +23,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
       - name: Test Coverage
-        run: npx hardhat coverage --testfiles test/Ticket.js
+        run: REPORT_GAS=true npx hardhat test
+        # run: npx hardhat coverage --testfiles test/Ticket.js
       - name: Linters
         run: solhint 'contracts/**/*.sol'
