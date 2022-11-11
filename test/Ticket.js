@@ -15,9 +15,6 @@ describe("Ticket", function () {
     const GOHM = await ethers.getContractFactory("MockGOHM");
     const gohm = await GOHM.deploy();
     await gohm.deployed();
-    const USDC = await ethers.getContractFactory("MockUSDC");
-    const usdc = await USDC.deploy();
-    await usdc.deployed();
     const FRAX = await ethers.getContractFactory("MockFRAX");
     const frax = await FRAX.deploy();
     await frax.deployed();
@@ -26,7 +23,7 @@ describe("Ticket", function () {
     await dai.deployed();
     
     const Ticket = await ethers.getContractFactory("Ticket");
-    const ticket = await Ticket.deploy(MULTISIG, "0x0000000000000000000000000000000000000000", gohm.address, usdc.address, frax.address, dai.address);
+    const ticket = await Ticket.deploy(MULTISIG, "0x0000000000000000000000000000000000000000", gohm.address, frax.address, dai.address);
 
     const INPERSONTICKETNFT = await ethers.getContractFactory("InPersonTicketNFT");
     const inPersonTicketNFT = await INPERSONTICKETNFT.deploy(ticket.address);
@@ -37,8 +34,8 @@ describe("Ticket", function () {
     await ticket.setInPersonTicketNFTAddr(inPersonTicketNFT.address);
 
     // set ticket price
-    await ticket.setTicketPrice("2022-in-person", true, 33);
-    await ticket.setTicketPrice("2022-in-person", false, 3);
+    await ticket.setTicketPrice("2022-in-person", true,  ethers.utils.parseUnits("33", 18));
+    await ticket.setTicketPrice("2022-in-person", false,  ethers.utils.parseUnits("3", 18));
 
     return { ticket, inPersonTicketNFT, dai, owner, otherAccount };
   }
@@ -56,8 +53,8 @@ describe("Ticket", function () {
   describe("Test Ticket Contract", function () {
     it("setTicketPrice: Should set the right unlockTime", async function () {
       const { ticket } = await loadFixture(deployTicketFixture);
-      expect((await ticket.usdTicketPrices("2022-in-person")).toNumber()).to.equal(33);
-      expect((await ticket.gohmTicketPrices("2022-in-person")).toNumber()).to.equal(3);
+      expect((await ticket.usdTicketPrices("2022-in-person")).toString()).to.equal(ethers.utils.parseUnits("33", 18).toString());
+      expect((await ticket.gohmTicketPrices("2022-in-person")).toString()).to.equal(ethers.utils.parseUnits("3", 18).toString());
     });
 
     it("Should set the right owner", async function () {
@@ -94,7 +91,7 @@ describe("Ticket", function () {
   });
   describe("Test inPersonTicketNFT Contract", function () {
     it("Should raise revert transaction when it exceeds ticket inventories!", async function () {
-      const { ticket, owner, dai, otherAccount, inPersonTicketNFT } = await loadFixture(deployTicketFixture);
+      const { ticket, dai, otherAccount, inPersonTicketNFT } = await loadFixture(deployTicketFixture);
       await dai.transfer(otherAccount.address, ethers.utils.parseUnits("33", 18));
       await dai.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("33", 18))
       await ticket.connect(otherAccount).buyTicket("dai", "2022-in-person", true)

@@ -26,7 +26,6 @@ jobs:
         env: # Or as an environment variable
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           API_URL: ${{ secrets.API_URL }}
-        # run: REPORT_GAS=true npx hardhat test
         run: npx hardhat coverage --testfiles test/Ticket.js
       - name: Linters
         run: npx solhint 'contracts/**/*.sol'

@@ -8,7 +8,6 @@ import "./InPersonTicketNFT.sol";
 contract Ticket is Ownable {
     using SafeERC20 for IERC20;
     IERC20 public gohm;
-    IERC20 public usdc;
     IERC20 public frax;
     IERC20 public dai;
     mapping(string => uint256) public usdTicketPrices;
@@ -31,12 +30,10 @@ contract Ticket is Ownable {
         address multisig,
         address nftAddr,
         address gohmAddr,
-        address usdcAddr,
         address fraxAddr,
         address daiAddr
     ) {
         gohm = IERC20(gohmAddr);
-        usdc = IERC20(usdcAddr);
         frax = IERC20(fraxAddr);
         dai = IERC20(daiAddr);
         gnosisMultiSigAddr = multisig;
@@ -50,7 +47,6 @@ contract Ticket is Ownable {
         bool isStableCoin
     ) {
         uint256 tokenPrice = _getTicketPrice(
-            tokenName,
             ticketName,
             isStableCoin
         );
@@ -84,7 +80,6 @@ contract Ticket is Ownable {
         bool isStableCoin
     ) public checkAllowance(tokenName, ticketName, isStableCoin) {
         uint256 tokenPrice = _getTicketPrice(
-            tokenName,
             ticketName,
             isStableCoin
         );
@@ -100,7 +95,7 @@ contract Ticket is Ownable {
 
     function withdrawToken() external onlyOwner {
         // multi-sig: Gnosis wallet address
-        IERC20[4] memory tokenArray = [gohm, usdc, frax, dai];
+        IERC20[3] memory tokenArray = [gohm, frax, dai];
         for (uint256 idx = 0; idx < tokenArray.length; idx++) {
             uint256 tokenBalance = tokenArray[idx].balanceOf(address(this));
             if (tokenBalance != 0) {
@@ -121,11 +116,6 @@ contract Ticket is Ownable {
         ) {
             return gohm;
         } else if (
-            keccak256(abi.encodePacked("usdc")) ==
-            keccak256(abi.encodePacked(tokenName))
-        ) {
-            return usdc;
-        } else if (
             keccak256(abi.encodePacked("frax")) ==
             keccak256(abi.encodePacked(tokenName))
         ) {
@@ -137,48 +127,18 @@ contract Ticket is Ownable {
             return dai;
         }
         revert(
-            "Invalid tokenName, it should be one of gohm, usdt, usdc, frax, dai"
+            "Invalid tokenName, it should be one of gohm, usdt, frax, dai"
         );
     }
 
     function _getTicketPrice(
-        string memory tokenName,
         string memory ticketName,
         bool isStableCoin
     ) private view returns (uint256) {
         if (isStableCoin == true) {
             return
-                usdTicketPrices[ticketName] * 10**_getTokenDecimals(tokenName);
+                usdTicketPrices[ticketName];
         }
-        return gohmTicketPrices[ticketName] * 10**_getTokenDecimals(tokenName);
-    }
-
-    function _getTokenDecimals(string memory tokenName)
-        private
-        pure
-        returns (uint256)
-    {
-        if (
-            keccak256(abi.encodePacked("gohm")) ==
-            keccak256(abi.encodePacked(tokenName))
-        ) {
-            return 9;
-        } else if (
-            keccak256(abi.encodePacked("usdc")) ==
-            keccak256(abi.encodePacked(tokenName))
-        ) {
-            return 6;
-        } else if (
-            keccak256(abi.encodePacked("frax")) ==
-            keccak256(abi.encodePacked(tokenName))
-        ) {
-            return 18;
-        } else if (
-            keccak256(abi.encodePacked("dai")) ==
-            keccak256(abi.encodePacked(tokenName))
-        ) {
-            return 18;
-        }
-        revert("token Address not found!");
+        return gohmTicketPrices[ticketName];
     }
 }
