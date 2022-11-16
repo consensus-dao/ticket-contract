@@ -26,6 +26,6 @@ jobs:
         env: # Or as an environment variable
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           API_URL: ${{ secrets.API_URL }}
-        run: npx hardhat coverage --testfiles test/Ticket.js
+        run: npx hardhat coverage --testfiles test/Ticket.js; test $? -eq 0 && echo "passed" || exit 1;
       - name: Linters
-        run: npx solhint 'contracts/**/*.sol'
+        run: npx solhint 'contracts/**/*.sol'; test $? -eq 0 && echo "passed" || exit 1;
