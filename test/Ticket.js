@@ -35,26 +35,28 @@ describe("Ticket", function () {
 
     // set ticket price
     await ticket.setTicketPrice("2022-in-person", true,  ethers.utils.parseUnits("33", 18));
-    await ticket.setTicketPrice("2022-in-person", false,  ethers.utils.parseUnits("3", 18));
+    await ticket.setTicketPrice("2022-in-person", false,  ethers.utils.parseUnits("0.003", 18));
 
-    return { ticket, inPersonTicketNFT, dai, owner, otherAccount };
+    return { ticket, inPersonTicketNFT, dai, owner, otherAccount, gohm };
   }
 
   async function _buyTicket() {
-    const { ticket, dai, otherAccount, inPersonTicketNFT } = await loadFixture(deployTicketFixture);
-    await dai.transfer(otherAccount.address, ethers.utils.parseUnits("33", 18));
+    const { ticket, gohm, otherAccount, inPersonTicketNFT, dai } = await loadFixture(deployTicketFixture);
+    await gohm.transfer(otherAccount.address, ethers.utils.parseUnits("0.003", 18));
 
-    await dai.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("33", 18))
-    await ticket.connect(otherAccount).buyTicket("dai", "2022-in-person", true)
-    return { ticket, dai, otherAccount, inPersonTicketNFT };
+    await gohm.connect(otherAccount).approve(ticket.address, ethers.utils.parseUnits("1", 18))
+    await ticket.connect(otherAccount).buyTicket("gohm", "2022-in-person", false)
+    expect(ethers.utils.formatUnits(await gohm.balanceOf(ticket.address), 18)).to.equal('0.003')
+    
+    return { ticket, gohm, otherAccount, inPersonTicketNFT, dai };
 
   }
 
   describe("Test Ticket Contract", function () {
-    it("setTicketPrice: Should set the right unlockTime", async function () {
+    it("setTicketPrice: Should set the right price", async function () {
       const { ticket } = await loadFixture(deployTicketFixture);
       expect((await ticket.usdTicketPrices("2022-in-person")).toString()).to.equal(ethers.utils.parseUnits("33", 18).toString());
-      expect((await ticket.gohmTicketPrices("2022-in-person")).toString()).to.equal(ethers.utils.parseUnits("3", 18).toString());
+      expect((await ticket.gohmTicketPrices("2022-in-person")).toString()).to.equal(ethers.utils.parseUnits("0.003", 18).toString());
     });
 
     it("Should set the right owner", async function () {
@@ -63,23 +65,27 @@ describe("Ticket", function () {
     });
 
     it("buyTicket: Shoud charge user token and mint them NFT as ticket!", async function () {
-      const { ticket, dai, otherAccount, inPersonTicketNFT } = await loadFixture(_buyTicket);
-      const ownerBalance = await dai.balanceOf(otherAccount.address);
-      expect(ownerBalance.toNumber()).to.equal(0);
+      const { ticket, dai, otherAccount, inPersonTicketNFT, gohm } = await loadFixture(_buyTicket);
+      const ownerDaiBalance = await dai.balanceOf(otherAccount.address);
+      expect(ownerDaiBalance.toNumber()).to.equal(0);
+      const ownerGohmBalance = await gohm.balanceOf(otherAccount.address);
+      expect(ownerGohmBalance.toNumber()).to.equal(0);
       expect((await inPersonTicketNFT.balanceOf(otherAccount.address)).toNumber()).to.equal(1);
       expect((await inPersonTicketNFT.ownerOf(1))).to.equal(otherAccount.address);
       
-      const balanceOfTicketContract = (await dai.balanceOf(ticket.address)).div(DECIMALS)
-      expect(balanceOfTicketContract.toNumber()).to.equal(33);
+      const gohmBalanceOfTicketContract = (await gohm.balanceOf(ticket.address))
+      expect(ethers.utils.formatUnits(gohmBalanceOfTicketContract, 18)).to.equal('0.003')
+      const daiBalanceOfTicketContract = (await dai.balanceOf(ticket.address))
+      expect(ethers.utils.formatUnits(daiBalanceOfTicketContract, 18)).to.equal('0.0')
     });
 
     it("withdrawToken: Shoud withdraw token to user wallet!", async function () {
       // withdraw!
-      const { ticket, dai } = await loadFixture(_buyTicket);
+      const { ticket, gohm } = await loadFixture(_buyTicket);
       await ticket.withdrawToken()
-      const balanceOfOwnerWallet = (await dai.balanceOf(MULTISIG)).div(DECIMALS)
-      expect(balanceOfOwnerWallet.toNumber()).to.equal(33);
-      expect((await dai.balanceOf(ticket.address)).div(DECIMALS).toNumber()).to.equal(0);
+      const balanceOfOwnerWallet = (await gohm.balanceOf(MULTISIG))
+      expect(ethers.utils.formatUnits(balanceOfOwnerWallet, 18)).to.equal('0.003')
+      expect(ethers.utils.formatUnits(await gohm.balanceOf(ticket.address)), 18).to.equal("0.0");
     });
 
     it("withdrawToken: Should withdraw ticket revenue to multi-sig wallet!", async function () {
