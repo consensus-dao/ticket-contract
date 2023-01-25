@@ -96,12 +96,13 @@ contract Ticket is Ownable {
     function withdrawToken() external onlyOwner {
         // multi-sig: Gnosis wallet address
         IERC20[3] memory tokenArray = [gohm, frax, dai];
-        for (uint256 idx = 0; idx < tokenArray.length; idx++) {
+        for (uint256 idx = 0; idx < tokenArray.length;) {
             uint256 tokenBalance = tokenArray[idx].balanceOf(address(this));
             if (tokenBalance != 0) {
                 tokenArray[idx].safeTransfer(gnosisMultiSigAddr, tokenBalance);
                 emit WithdrawFundTo(gnosisMultiSigAddr, idx, tokenBalance);
             }
+            unchecked { ++idx; }
         }
     }
 

@@ -15,6 +15,6 @@ npx hardhat run scripts/deploy.js
 
 ## Local Development
 
-1. `npx hardhat  run scripts/deploy_tokens.js --network localhost`
+1. `npx hardhat run scripts/deploy_tokens.js --network localhost`
 2. Put the local token addresses into [./scripts/deploy_ticket.js](./scripts/deploy_ticket.js) and do not commit
-3. `npx hardhat  run scripts/deploy_ticket.js --network localhost`
+3. `npx hardhat run scripts/deploy_ticket.js --network localhost`
